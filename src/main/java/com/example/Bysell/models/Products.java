@@ -5,6 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "products")
 @Data
@@ -25,4 +29,23 @@ public class Products {
     private String city;
     @Column(name = "author")
     private String author;
+
+    // Связь: один продукт имеет много изображений.
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY,
+    mappedBy = "products")
+    private List<Image> images = new ArrayList<>(); // Список изображений продукта.
+    private Long previewImageId; // ID превью
+    private LocalDateTime dateOfCreated; // Дата создания продукта.
+
+    // Установка даты создания перед сохранением продукта.
+    @PrePersist
+    private void init(){
+        dateOfCreated = LocalDateTime.now();
+    }
+
+    // Метод для добавления изображения к продукту.
+    public void addImageToProduct(Image image){
+        image.setProducts(this); // Связываем изображение с продуктом.
+        images.add(image); // Добавляем изображение в список.
+    }
 }
