@@ -1,12 +1,15 @@
 package com.example.Bysell.service;
 import com.example.Bysell.models.Image;
 import com.example.Bysell.models.Products;
+import com.example.Bysell.models.User;
 import com.example.Bysell.repositories.ProductRepository;
+import com.example.Bysell.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.security.Principal;
 import java.util.List;
 
 @Service // Сервисный компонент Spring для бизнес-логики
@@ -15,6 +18,7 @@ import java.util.List;
 public class ProductsService {
     // Репозиторий для работы с сущностью Products.
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
     // получение всего листа товара с фильтрацией по названию
     public List<Products> listProducts(String title) {
@@ -23,7 +27,8 @@ public class ProductsService {
         return productRepository.findAll();}
 
     // Метод для сохранения продукта с несколькими изображениями.
-    public void saveProducts(Products products, MultipartFile file1, MultipartFile file2, MultipartFile file3) throws IOException {
+    public void saveProducts(Principal principal, Products products, MultipartFile file1, MultipartFile file2, MultipartFile file3) throws IOException {
+        products.setUser(getUserByPrincipal(principal));
         Image image1;
         Image image2;
         Image image3;
@@ -44,10 +49,15 @@ public class ProductsService {
         }
 
         // логировка инфы о сохранении товара
-        log.info("Saving new Product. Title: {}; Author: {}", products.getTitle(),products.getAuthor());
+        log.info("Saving new Product. Title: {}; Author email: {}", products.getTitle(),products.getUser().getEmail());
         Products productFromDb = productRepository.save(products); // сохранение продукта в бд
         productFromDb.setPreviewImageId(productFromDb.getImages().get(0).getId()); // установка превьюшки(image1)
         productRepository.save(products); // сохранение изменений в бд
+    }
+
+    public User getUserByPrincipal(Principal principal) {
+        if(principal == null) return new User();
+        return userRepository.findByEmail(principal.getName());
     }
 
     private Image toImageEntity(MultipartFile file) throws IOException {

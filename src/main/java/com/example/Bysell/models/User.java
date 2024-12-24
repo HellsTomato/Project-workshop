@@ -7,10 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -18,7 +15,6 @@ import java.util.Set;
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     @Column(name = "id")
     private Long id;
 
@@ -46,19 +42,26 @@ public class User implements UserDetails {
 
     @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)  // Список ролей.
     @CollectionTable(name = "user_role", // Таблица для хранения ролей.
-    joinColumns = @JoinColumn(name = "user_id"))
+            joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING) // Хранение ролей в строковом формате.
     private Set<Role> roles = new HashSet<>(); // Набор ролей пользователя.
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Products> products = new ArrayList<>();
+
+    @Column(name = "date_of_created")
     private LocalDateTime dateOfCreated; // Дата создания пользователя.
 
     // Метод вызывается перед сохранением в базу.
     @PrePersist
-    private void init(){
+    private void init() {
         dateOfCreated = LocalDateTime.now();
     }
 
     // security
+
+    public boolean isAdmin(){return roles.contains(Role.ROLE_ADMIN);}
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles;

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.security.Principal;
 
 // позволяет обрабатывать HTTP-запросы и возвращать представления.
 @Controller
@@ -22,8 +23,9 @@ public class ProductsController {
 
     // передаёт список всех товаров на главную страницу
     @GetMapping("/")
-    public String products(@RequestParam(name = "title", required = false) String title, Model model){
+    public String products(@RequestParam(name = "title", required = false) String title, Principal principal, Model model){
         model.addAttribute("products", productsService.listProducts(title));
+        model.addAttribute("user", productsService.getUserByPrincipal(principal));
         return "products";
     }
 
@@ -43,8 +45,8 @@ public class ProductsController {
     public String createProduct(Products products,
                                 @RequestParam("file1") MultipartFile file1,
                                 @RequestParam("file2") MultipartFile file2,
-                                @RequestParam("file3") MultipartFile file3) throws IOException {
-        productsService.saveProducts(products, file1, file2, file3);
+                                @RequestParam("file3") MultipartFile file3, Principal principal) throws IOException {
+        productsService.saveProducts(principal, products, file1, file2, file3);
         return "redirect:/";
     }
 
